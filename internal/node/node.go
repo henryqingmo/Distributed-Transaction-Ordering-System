@@ -3,6 +3,7 @@ package node
 import (
 	"bufio"
 	"cs425_mp1/internal/config"
+	"cs425_mp1/internal/network/manager"
 	"fmt"
 	"log"
 	"os"
@@ -10,22 +11,22 @@ import (
 )
 
 type Node struct {
-	identifier string
+	identifier config.NodeInfo
 	parsed     config.Parsed
 }
 
-func New(identifier string, parsed config.Parsed) *Node {
+func NewNode(identifier config.NodeInfo, parsed config.Parsed) *Node {
+	manager := manager.NewManager(identifier, 1024)
+	manager.ConnectToPeers(parsed.Nodes)
+
 	return &Node{
 		identifier: identifier,
 		parsed:     parsed,
 	}
 }
 
-func node(identifier string, parsed config.Parsed) {
-
-}
-
 func (n *Node) Run() {
+
 	sc := bufio.NewScanner(os.Stdin)
 	sc.Buffer(make([]byte, 0, 1024), 1024*1024)
 	for sc.Scan() {
@@ -41,6 +42,14 @@ func (n *Node) Run() {
 		fields := strings.Fields(line)
 
 		action := fields[0]
+
+		/* TODO:
+		Create network manager and start listening
+		Connect to all peers
+		Create the ISIS orderer and the ledger
+		Start reading stdin in a goroutine, pushing transactions onto a channel
+		Enter the main event loop
+		*/
 
 		switch action {
 		case "DEPOSIT":

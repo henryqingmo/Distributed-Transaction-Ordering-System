@@ -2,7 +2,6 @@ package main
 
 import (
 	"cs425_mp1/internal/config"
-	"cs425_mp1/internal/node"
 	"fmt"
 	"log"
 	"os"
@@ -25,8 +24,11 @@ func main() {
 	for _, n := range parsed.Nodes {
 		fmt.Printf("ID: %s, Host: %s, Port: %s\n", n.ID, n.Host, n.Port)
 	}
+	identifier := os.Args[1]
 
-	n := node.New(os.Args[1], parsed)
+	node, err := config.ParseIdentifier(parsed, identifier)
+
+	n := node.NewNode(node, parsed)
 	n.Run()
 
 }

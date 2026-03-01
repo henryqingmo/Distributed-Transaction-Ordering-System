@@ -12,4 +12,3 @@ node:
 
 clean:
 	rm -rf $(BIN_DIR)
-

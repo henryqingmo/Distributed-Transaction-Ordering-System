@@ -7,14 +7,14 @@ import (
 	"strings"
 )
 
-type node struct {
+type NodeInfo struct {
 	ID   string
 	Host string
 	Port string
 }
 
 type Parsed struct {
-	Nodes []node
+	Nodes []NodeInfo
 }
 
 func ParseConfig(filePath string) (Parsed, error) {
@@ -38,7 +38,7 @@ func ParseConfig(filePath string) (Parsed, error) {
 			return Parsed{}, fmt.Errorf("malformed line: %q", line)
 		}
 
-		n := node{
+		n := NodeInfo{
 			ID:   fields[0],
 			Host: fields[1],
 			Port: fields[2],
@@ -50,4 +50,13 @@ func ParseConfig(filePath string) (Parsed, error) {
 		return Parsed{}, err
 	}
 	return parsed, nil
+}
+
+func ParseIdentifier(parsed Parsed, identifier string) (NodeInfo, error) {
+	for _, n := range parsed.Nodes {
+		if n.ID == identifier {
+			return n, nil
+		}
+	}
+	return NodeInfo{}, fmt.Errorf("identifier %q not found", identifier)
 }
