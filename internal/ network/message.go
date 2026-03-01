@@ -31,7 +31,13 @@ type MsgTransaction struct {
 }
 
 type MsgPropose struct {
+	MsgId            string
+	ProposedPriority int
+	FromNode         string
 }
 
 type MsgAgree struct {
+	MsgId          string
+	AgreedPriority int
+	FinalNodeID    string
 }
