@@ -1,4 +1,4 @@
-package main
+package manager
 
 type MessageType int
 

@@ -2,15 +2,16 @@ package manager
 
 import (
 	"cs425_mp1/internal/config"
+	"encoding/json"
+	"fmt"
 	"net"
 	"sync"
-    "encoding/json"
-	"golang.org/x/text/message"
 )
 
 type Manager struct {
     self      config.NodeInfo
     peers     map[string]net.Conn   // nodeID -> TCP connection
+    peerIDs   []string              // all peer IDs, set once by ConnectToPeers
     mu        sync.Mutex            // protects peers map
     inbox     chan Message           // incoming messages for the node to consume
     failures  chan string            // IDs of peers that died
@@ -21,6 +22,7 @@ func NewManager(self config.NodeInfo, inboxSize int) *Manager {
     return &Manager{
         self:     self,
         peers:    make(map[string]net.Conn),
+        peerIDs:  []string{},
         inbox:    make(chan Message, inboxSize),
         failures: make(chan string, inboxSize),
     }
@@ -50,6 +52,7 @@ func (m *Manager) ConnectToPeers(nodes []config.NodeInfo) error {
         if node.ID == m.self.ID {
             continue
         }
+        m.peerIDs = append(m.peerIDs, node.ID)
         // Establish TCP connection to peer
         conn, err := net.Dial("tcp", net.JoinHostPort(node.Host, node.Port))
         if err != nil {
@@ -59,12 +62,16 @@ func (m *Manager) ConnectToPeers(nodes []config.NodeInfo) error {
         m.peers[node.ID] = conn
         m.mu.Unlock()
     }
- }
-
-func (m *Manager) Broadcast(msg Message) {
-
+    return nil
 }
 
+func (m *Manager) Broadcast(msg Message) {
+    for _, id := range m.peerIDs {
+        if err := m.Send(id, msg); err != nil {
+            m.failures <- id
+        }
+    }
+}
 
 func (m *Manager) Send(nodeID string, msg Message) error { 
     m.mu.Lock()
@@ -83,6 +90,22 @@ func (m *Manager) Send(nodeID string, msg Message) error {
     return err
  }
 
-func (m *Manager) Inbox() <-chan Message { ... }
-func (m *Manager) Failures() <-chan string { ... }
-func (m *Manager) Close() { ... }...
+func (m *Manager) handleConnection(conn net.Conn) {
+    defer conn.Close()
+    dec := json.NewDecoder(conn)
+    for {
+        var msg Message
+        if err := dec.Decode(&msg); err != nil {
+            return
+        }
+        m.inbox <- msg
+    }
+}
+
+func (m *Manager) Inbox() <-chan Message { return m.inbox }
+func (m *Manager) Failures() <-chan string { return m.failures }
+func (m *Manager) Close() {
+    if m.listener != nil {
+        m.listener.Close()
+    }
+}

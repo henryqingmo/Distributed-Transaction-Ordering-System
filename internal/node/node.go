@@ -3,7 +3,7 @@ package node
 import (
 	"bufio"
 	"cs425_mp1/internal/config"
-	"cs425_mp1/internal/network/manager"
+	"cs425_mp1/internal/network"
 	"fmt"
 	"log"
 	"os"
