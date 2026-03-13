@@ -11,8 +11,8 @@ type Queue struct {
 
 type QueueItem struct {
 	id          string
-	tx          string
-	priority    float32
+	tx          manager.MsgTransaction
+	priority    float64
 	deliverable bool
 	sender      string
 }
@@ -20,6 +20,7 @@ type QueueItem struct {
 type isisOrdering struct {
 	holdbackQueue Queue
 	messageMap    map[string]*QueueItem
+	counter       float64
 }
 
 func (q *Queue) Enqueue(item *QueueItem) {
@@ -44,10 +45,11 @@ func NewISISOrdering() *isisOrdering {
 	return &isisOrdering{
 		holdbackQueue: Queue{},
 		messageMap:    make(map[string]*QueueItem),
+		counter:       0,
 	}
 }
 
-func NewQueueItem(id string, tx string, priority float32, deliverable bool, sender string) *QueueItem {
+func NewQueueItem(id string, tx manager.MsgTransaction, priority float64, deliverable bool, sender string) *QueueItem {
 	return &QueueItem{
 		id:          id,
 		tx:          tx,
@@ -92,6 +94,16 @@ func (o *isisOrdering) DeliveryReady() []*QueueItem {
 }
 
 func (o *isisOrdering) OnReceiveTransaction(msg manager.Message) {
+	o.counter++
+	item := NewQueueItem(
+		msg.Transaction.MsgId,
+		msg.Transaction,
+		o.counter,
+		false,
+		msg.Transaction.Sender,
+	)
+	o.holdbackQueue.Enqueue(item)
+	// Send TypePropose back to msg.Transaction.Sender
 }
 
 func (o *isisOrdering) OnReceivePropose(msg manager.Message) {

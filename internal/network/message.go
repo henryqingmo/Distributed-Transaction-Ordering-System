@@ -35,7 +35,7 @@ type MsgTransaction struct {
 
 type MsgPropose struct {
 	MsgId            string
-	ProposedPriority int
+	ProposedPriority float64
 	FromNode         string
 }
 
