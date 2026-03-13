@@ -70,5 +70,9 @@ func (n *Node) Run() {
 			}
 			manager.NewTransfer(account1, account2, amount)
 		}
+
+		select {
+		case msg := <-n.networkManager.Inbox():
+		}
 	}
 }
