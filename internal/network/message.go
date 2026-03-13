@@ -55,9 +55,10 @@ const (
 type Message struct {
 	Type        MessageType
 	SenderID    string // set on every message; used by the receiver to route replies
-	Transaction *MsgTransaction
-	Propose     *MsgPropose
-	Agree       *MsgAgree
+	Transaction MsgTransaction
+	Propose     MsgPropose
+	Agree       MsgAgree
+
 }
 
 type Txkind int
@@ -68,6 +69,9 @@ const (
 )
 
 type MsgTransaction struct {
+	MsgId  string
+	Sender string
+
 	Kind    Txkind
 	Account string // for Deposit
 	Amount  int
@@ -77,21 +81,20 @@ type MsgTransaction struct {
 
 type MsgPropose struct {
 	MsgId            string
-	ProposedPriority int
+	ProposedPriority float64
 	FromNode         string
 }
 
 type MsgAgree struct {
 	MsgId          string
-	AgreedPriority int
-	FinalNodeID    string
+	AgreedPriority float64
 }
 
-func NewTransfer(source, dest string, amount int) Message {
+func NewTransfer(msgId, source, dest string, amount int) Message {
 
 	return Message{
 		Type: TypeTransaction,
-		Transaction: &MsgTransaction{
+		Transaction: MsgTransaction{
 			Kind:   Transfer,
 			Source: source,
 			Dest:   dest,
@@ -100,13 +103,34 @@ func NewTransfer(source, dest string, amount int) Message {
 	}
 }
 
-func NewDeposit(account string, amount int) Message {
+func NewDeposit(msgId, account string, amount int) Message {
 	return Message{
 		Type: TypeTransaction,
-		Transaction: &MsgTransaction{
+		Transaction: MsgTransaction{
 			Kind:    Deposit,
 			Account: account,
 			Amount:  amount,
+		},
+	}
+}
+
+func NewPropose(msgID string, priority float64, fromNode string) Message {
+	return Message{
+		Type: TypePropose,
+		Propose: MsgPropose{
+			MsgId:            msgID,
+			ProposedPriority: priority,
+			FromNode:         fromNode,
+		},
+	}
+}
+
+func NewAgree(msgID string, priority float64) Message {
+	return Message{
+		Type: TypeAgree,
+		Agree: MsgAgree{
+			MsgId:          msgID,
+			AgreedPriority: priority,
 		},
 	}
 }
