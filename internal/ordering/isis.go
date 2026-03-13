@@ -40,6 +40,13 @@ func (q *Queue) Peek() *QueueItem {
 	return q.items[0]
 }
 
+func NewISISOrdering() *isisOrdering {
+	return &isisOrdering{
+		holdbackQueue: Queue{},
+		messageMap:    make(map[string]*QueueItem),
+	}
+}
+
 func NewQueueItem(id string, tx string, priority float32, deliverable bool, sender string) *QueueItem {
 	return &QueueItem{
 		id:          id,
@@ -71,13 +78,20 @@ func (q *Queue) Sort() {
 	})
 }
 
+func (o *isisOrdering) DeliveryReady() []*QueueItem {
+	var ready []*QueueItem
+	for len(o.holdbackQueue.items) > 0 {
+		item := o.holdbackQueue.Peek()
+
+		if !item.deliverable {
+			break
+		}
+		ready = append(ready, item)
+	}
+	return ready
+}
+
 func (o *isisOrdering) OnReceiveTransaction(msg manager.Message) {
-	if msg.Transaction.Kind == manager.Deposit {
-	}
-
-	if msg.Transaction.Kind == manager.Transfer {
-	}
-
 }
 
 func (o *isisOrdering) OnReceivePropose(msg manager.Message) {

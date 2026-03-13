@@ -9,6 +9,7 @@ const (
 )
 
 type Message struct {
+	ID          string
 	Type        MessageType
 	Transaction *MsgTransaction
 	Propose     *MsgPropose
