@@ -90,15 +90,14 @@ func (q *Queue) Sort() {
 	})
 }
 
-func (o *ISISOrdering) DeliveryReady() []*QueueItem {
-	var ready []*QueueItem
+func (o *ISISOrdering) DeliveryReady() []manager.MsgTransaction {
+	var ready []manager.MsgTransaction
 	for len(o.holdbackQueue.items) > 0 {
 		item := o.holdbackQueue.Peek()
-
 		if !item.deliverable {
 			break
 		}
-		ready = append(ready, o.holdbackQueue.Dequeue())
+		ready = append(ready, o.holdbackQueue.Dequeue().tx)
 	}
 	return ready
 }

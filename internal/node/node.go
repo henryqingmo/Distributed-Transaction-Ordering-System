@@ -6,6 +6,7 @@ import (
 	"cs425_mp1/internal/config"
 	manager "cs425_mp1/internal/network"
 	ordering "cs425_mp1/internal/ordering"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -102,12 +103,19 @@ func (n *Node) Run() {
 		case msg := <-n.networkManager.Inbox():
 			out := n.ordering.HandleMessage(n.identifier.ID, msg)
 			if out != nil {
-				// TODO: if out.To == "" broadcast, else send to out.To
-				_ = out
+				if out.To == "" {
+					n.networkManager.Broadcast(out.Msg)
+				} else {
+					n.networkManager.Send(out.To, out.Msg)
+				}
 			}
-			for _, item := range n.ordering.DeliveryReady() {
-				// TODO: apply item to ledger, print BALANCES
-				_ = item
+			for _, tx := range n.ordering.DeliveryReady() {
+				if tx.Kind == manager.Deposit {
+					n.ledger.Deposit(tx.Account, tx.Amount)
+				} else {
+					n.ledger.Transfer(tx.Source, tx.Dest, tx.Amount)
+				}
+				fmt.Println(n.ledger.Balances())
 			}
 		case id := <-n.networkManager.Failures():
 			log.Printf("peer %s died", id)
