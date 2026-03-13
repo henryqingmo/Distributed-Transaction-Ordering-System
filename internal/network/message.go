@@ -46,13 +46,15 @@ func ReadMsg(r io.Reader) (Message, error) {
 type MessageType int
 
 const (
-	TypeTransaction MessageType = iota
-	TypePropose
-	TypeAgree
+	TypeHandshake   MessageType = iota // first message on every new connection
+	TypeTransaction                    // originator broadcasts a new transaction
+	TypePropose                        // receiver proposes a priority back to originator
+	TypeAgree                          // originator broadcasts the agreed priority
 )
 
 type Message struct {
 	Type        MessageType
+	SenderID    string // set on every message; used by the receiver to route replies
 	Transaction *MsgTransaction
 	Propose     *MsgPropose
 	Agree       *MsgAgree
