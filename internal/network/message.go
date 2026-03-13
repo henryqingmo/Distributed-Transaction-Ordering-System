@@ -41,7 +41,7 @@ type MsgPropose struct {
 
 type MsgAgree struct {
 	MsgId          string
-	AgreedPriority int
+	AgreedPriority float64
 	FinalNodeID    string
 }
 

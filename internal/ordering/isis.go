@@ -21,6 +21,13 @@ type isisOrdering struct {
 	holdbackQueue Queue
 	messageMap    map[string]*QueueItem
 	counter       float64
+	proposals     map[string]*proposalState
+	numNodes      int
+}
+
+type proposalState struct {
+	maxPriority float64
+	count       int
 }
 
 func (q *Queue) Enqueue(item *QueueItem) {
@@ -41,11 +48,13 @@ func (q *Queue) Peek() *QueueItem {
 	return q.items[0]
 }
 
-func NewISISOrdering() *isisOrdering {
+func NewISISOrdering(numNodes int) *isisOrdering {
 	return &isisOrdering{
 		holdbackQueue: Queue{},
 		messageMap:    make(map[string]*QueueItem),
+		proposals:     make(map[string]*proposalState),
 		counter:       0,
+		numNodes:      numNodes,
 	}
 }
 
@@ -93,7 +102,12 @@ func (o *isisOrdering) DeliveryReady() []*QueueItem {
 	return ready
 }
 
-func (o *isisOrdering) OnReceiveTransaction(msg manager.Message) {
+type Outbound struct {
+	To  string
+	Msg manager.Message
+}
+
+func (o *isisOrdering) OnReceiveTransaction(msg manager.Message) Outbound {
 	o.counter++
 	item := NewQueueItem(
 		msg.Transaction.MsgId,
@@ -104,10 +118,37 @@ func (o *isisOrdering) OnReceiveTransaction(msg manager.Message) {
 	)
 	o.holdbackQueue.Enqueue(item)
 	// Send TypePropose back to msg.Transaction.Sender
+	return Outbound{
+		msg.Transaction.Sender,
+		msg,
+	}
 }
 
-func (o *isisOrdering) OnReceivePropose(msg manager.Message) {
-
+func (o *isisOrdering) OnReceivePropose(msg manager.Message) *Outbound {
+	msgID := msg.Propose.MsgId
+	state, ok := o.proposals[msgID]
+	if !ok {
+		state = &proposalState{}
+		o.proposals[msgID] = state
+	}
+	state.count++
+	if msg.Propose.ProposedPriority > state.maxPriority {
+		state.maxPriority = msg.Propose.ProposedPriority
+	}
+	if state.count == o.numNodes {
+		delete(o.proposals, msgID)
+		return &Outbound{
+			To: "", // broadcast
+			Msg: manager.Message{
+				Type: manager.TypeAgree,
+				Agree: manager.MsgAgree{
+					MsgId:          msgID,
+					AgreedPriority: state.maxPriority,
+				},
+			},
+		}
+	}
+	return nil
 }
 
 func (o *isisOrdering) onReceiveAgree(msg manager.Message) {
