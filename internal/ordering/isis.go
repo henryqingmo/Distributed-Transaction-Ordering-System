@@ -161,10 +161,24 @@ func (o *ISISOrdering) OnReceivePropose(msg manager.Message) *Outbound {
 
 // PeerFailed decrements the expected proposal count and returns any TypeAgree
 // messages that can now be finalized because enough proposals have been collected.
-func (o *ISISOrdering) PeerFailed() []*Outbound {
+func (o *ISISOrdering) PeerFailed(failedID string) []*Outbound {
 	if o.numNodes > 1 {
 		o.numNodes--
 	}
+	// Remove holdback items from the failed node that never received TypeAgree.
+	// These will never be delivered since the originator is gone.
+	filtered := o.holdbackQueue.items[:0]
+	for _, item := range o.holdbackQueue.items {
+		if item.sender == failedID && !item.deliverable {
+			delete(o.messageMap, item.id)
+			delete(o.proposals, item.id)
+		} else {
+			filtered = append(filtered, item)
+		}
+	}
+	o.holdbackQueue.items = filtered
+
+	// Basically check after removal of the peer, what message now is ready
 	var out []*Outbound
 	for msgID, state := range o.proposals {
 		if o.numNodes > 0 && state.count >= o.numNodes {
