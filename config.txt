@@ -1,4 +1,9 @@
-3
+8
 node1 sp26-cs425-3701.cs.illinois.edu 1234
 node2 sp26-cs425-3702.cs.illinois.edu 1234
 node3 sp26-cs425-3703.cs.illinois.edu 1234
+node4 sp26-cs425-3704.cs.illinois.edu 1234
+node5 sp26-cs425-3705.cs.illinois.edu 1234
+node6 sp26-cs425-3706.cs.illinois.edu 1234
+node7 sp26-cs425-3707.cs.illinois.edu 1234
+node8 sp26-cs425-3708.cs.illinois.edu 1234
