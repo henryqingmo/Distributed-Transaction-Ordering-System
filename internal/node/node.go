@@ -101,16 +101,14 @@ func (n *Node) handleMsg(msg manager.Message) {
 	out := n.ordering.HandleMessage(n.identifier.ID, msg)
 	if out != nil {
 		if out.To == "" {
-			// Originator is broadcasting TypeAgree — also apply it locally.
+			// Either the originator just generated TypeAgree from proposals, or a
+			// non-originator is re-broadcasting TypeAgree for the first time.
+			// In both cases: broadcast to peers and apply locally.
 			n.networkManager.Broadcast(out.Msg)
 			n.ordering.HandleMessage(n.identifier.ID, out.Msg)
 		} else {
 			n.networkManager.Send(out.To, out.Msg)
 		}
-	}
-	// Re-broadcast TypeAgree so peers get it even if originator died mid-broadcast.
-	if msg.Type == manager.TypeAgree {
-		n.networkManager.Broadcast(msg)
 	}
 	for _, result := range n.ordering.DeliveryReady() {
 		n.applyAndPrint(result)

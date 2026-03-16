@@ -197,6 +197,10 @@ func (o *ISISOrdering) onReceiveAgree(msg manager.Message) *Outbound {
 	if !ok {
 		return nil
 	}
+	if item.deliverable {
+		// Already agreed; suppress duplicate to prevent re-broadcast feedback loop.
+		return nil
+	}
 	item.priority = msg.Agree.AgreedPriority
 	item.deliverable = true
 	o.holdbackQueue.Sort()
@@ -204,5 +208,7 @@ func (o *ISISOrdering) onReceiveAgree(msg manager.Message) *Outbound {
 	if msg.Agree.AgreedPriority > o.counter {
 		o.counter = msg.Agree.AgreedPriority
 	}
-	return nil
+	// Return non-nil to signal the caller to re-broadcast this TypeAgree exactly once,
+	// covering the case where the originator died mid-broadcast.
+	return &Outbound{To: "", Msg: msg}
 }
