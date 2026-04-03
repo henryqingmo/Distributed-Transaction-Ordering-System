@@ -1,4 +1,4 @@
-# CS425 MP1 — Distributed Ledger with ISIS Total Ordering
+# Distributed Ledger with ISIS Total Ordering
 
 A distributed ledger system Multiple nodes coordinate `DEPOSIT` and `TRANSFER` transactions using the **ISIS total ordering protocol** to maintain consistent account balances across a cluster, even in the presence of node failures.
 
