@@ -36,6 +36,8 @@ stdin → Node.Run() → parse tx → ISIS ordering → apply to Ledger → prin
 
 On node failure, the cluster decrements the expected proposal count and finalizes any messages that now have enough proposals.
 
+![ISIS Total-Order Broadcast Algorithm](image.png)
+
 ## Building & Running
 
 ```bash
